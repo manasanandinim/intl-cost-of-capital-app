@@ -410,9 +410,10 @@ with tab_all:
     fig.add_hline(y=industry, line=dict(color="rgba(128,128,128,.35)", width=14))
     fig.update_layout(
         title=dict(text="WACC by industry (%)", x=0, y=0.995, yanchor="top", font=dict(size=15)),
-        height=max(500, 16 * len(order) + 110), margin=dict(l=10, r=10, t=80, b=10),
+        height=max(500, 16 * len(order) + 100), margin=dict(l=10, r=10, t=70, b=10),
         xaxis=dict(side="top", gridcolor="rgba(128,128,128,.15)", zeroline=False, ticksuffix="%"),
-        yaxis=dict(tickfont=dict(size=11), gridcolor="rgba(128,128,128,.08)"),
+        yaxis=dict(tickfont=dict(size=11), gridcolor="rgba(128,128,128,.08)",
+                   range=[-0.7, len(order) - 0.3], autorange=False),
         legend=dict(orientation="h", x=1, xanchor="right", y=0.995, yanchor="top", yref="container"),
         plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", hovermode="closest",
     )
