@@ -356,6 +356,8 @@ Interest-rate ratio (1 + rf_FC)/(1 + rf_US) = {g:.6f}
     ], columns=["Item", "Value", "Note"])
 
     all_df = coc.all_industries(betas_df, Inputs(**{**inputs.__dict__}))
+    all_export = all_df.rename(columns={"Cost of equity (FC)": f"Cost of equity ({currency}, {country})",
+                                        "WACC (FC)": f"WACC ({currency}, {country})"})
     sources_df = pd.DataFrame([
         ("Industry unlevered betas", "Damodaran", betas_src["source"], betas_src["as_of"],
          betas_src["fetched_at"], betas_src["status"]),
@@ -372,7 +374,7 @@ Interest-rate ratio (1 + rf_FC)/(1 + rf_US) = {g:.6f}
     xbuf = io.BytesIO()
     with pd.ExcelWriter(xbuf, engine="openpyxl") as xw:
         results_df.to_excel(xw, sheet_name="Results", index=False)
-        all_df.to_excel(xw, sheet_name="All industries", index=False)
+        all_export.to_excel(xw, sheet_name="All industries", index=False)
         sources_df.to_excel(xw, sheet_name="Sources", index=False)
     d1, d2, _ = st.columns([1, 1, 2])
     d1.download_button("⬇️ Results (CSV)", results_df.to_csv(index=False).encode(),
@@ -407,18 +409,19 @@ with tab_all:
             hovertemplate="%{y}<br>WACC " + currency + ": %{x:.2f}%<extra></extra>"))
     fig.add_hline(y=industry, line=dict(color="rgba(128,128,128,.35)", width=14))
     fig.update_layout(
-        height=max(500, 17 * len(order) + 120), margin=dict(l=10, r=10, t=40, b=10),
-        xaxis=dict(title="WACC (%)", side="top", gridcolor="rgba(128,128,128,.15)", zeroline=False),
+        title=dict(text="WACC by industry (%)", x=0, y=0.995, yanchor="top", font=dict(size=15)),
+        height=max(500, 16 * len(order) + 110), margin=dict(l=10, r=10, t=80, b=10),
+        xaxis=dict(side="top", gridcolor="rgba(128,128,128,.15)", zeroline=False, ticksuffix="%"),
         yaxis=dict(tickfont=dict(size=11), gridcolor="rgba(128,128,128,.08)"),
-        legend=dict(orientation="h", y=1.02, yanchor="bottom", x=0),
+        legend=dict(orientation="h", x=1, xanchor="right", y=0.995, yanchor="top", yref="container"),
         plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", hovermode="closest",
     )
 
-    left, right = st.columns([1.05, 1])
-    with right:
+    tab_tbl, tab_chart = st.tabs(["Table", "Chart"])
+    with tab_chart:
         st.plotly_chart(fig, width="stretch")
-        st.caption(f"Grey band = selected industry ({industry}).")
-    with left:
+        st.caption(f"Grey band = selected industry ({industry}). Hover a dot for its value.")
+    with tab_tbl:
         fmt = view.copy()
         for c in ["Cost of equity (USD)", "Cost of equity (FC)", "WACC (USD)", "WACC (FC)"]:
             fmt[c] = fmt[c] * 100
@@ -428,14 +431,14 @@ with tab_all:
         st.dataframe(
             fmt.style.apply(lambda r: ["background-color: rgba(42,120,214,.15)"
                                        if r["Industry"] == industry else "" for _ in r], axis=1),
-            hide_index=True, width="stretch", height=min(35 * len(fmt) + 40, 1700),
+            hide_index=True, width="stretch", height=600,
             column_config={c: st.column_config.NumberColumn(format="%.2f%%") for c in
                            ["Cost of equity (USD)", f"Cost of equity ({tag})",
                             "WACC (USD)", f"WACC ({tag})"]}
             | {"Unlevered beta": st.column_config.NumberColumn(format="%.3f"),
                "Levered beta": st.column_config.NumberColumn(format="%.3f")},
         )
-        st.download_button("⬇️ All industries (CSV)", all_df.to_csv(index=False).encode(),
+        st.download_button("⬇️ All industries (CSV)", all_export.to_csv(index=False).encode(),
                            f"all_industries_{country.replace(' ', '_')}_{stamp}.csv", "text/csv")
 
 # ---------------------------------------------------------------------------
@@ -519,7 +522,9 @@ with tab_checks:
          f"USD WACC {pct(o1.wacc_usd, 4)} → {pct(o2.wacc_usd, 4)}; "
          f"FC WACC {pct(o1.wacc_fc, 4)} → {pct(o2.wacc_fc, 4)}", "✅ Pass" if c_o else "❌ Fail"),
     ], columns=["Check", "What changes", "Result", "Status"])
-    st.dataframe(checks, hide_index=True, width="stretch")
+    checks = checks[["Status", "Check", "What changes", "Result"]]
+    st.dataframe(checks, hide_index=True, width="stretch",
+                 column_config={"Result": st.column_config.TextColumn(width="large")})
 
 # ---------------------------------------------------------------------------
 # Data sources
