@@ -276,7 +276,7 @@ with tab_res:
     m1.metric("WACC in USD", pct(res.wacc_usd))
     sel = " (selected country)" if same_ccy else ""
     m2.metric(f"WACC in {currency}{sel}", pct(res.wacc_fc),
-              delta=None if same_ccy else f"{(res.wacc_fc - res.wacc_usd) * 100:+.2f} pp vs USD",
+              delta=None if same_ccy else f"{round((res.wacc_fc - res.wacc_usd) * 100, 6) + 0.0:+.2f} pp vs USD",
               delta_color="off")
     m3.metric("Cost of equity in USD", pct(res.ke_usd))
     m4.metric(f"Cost of equity in {currency}{sel}", pct(res.ke_fc))
