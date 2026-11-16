@@ -223,6 +223,8 @@ st.title("International cost of capital")
 st.markdown(
     f"Cost of equity, cost of debt and WACC for a **{industry}** project, in **U.S. dollars** "
     f"and in **{currency}**, using the same tax rate, debt share and equity risk premium."
+    + (" The selected country is the U.S., so both columns should match. Pick another country "
+       "in the sidebar to compare currencies." if country == "United States" else "")
 )
 
 
@@ -303,7 +305,7 @@ with tab_res:
             continue
         cls = ' class="total"' if kind == "total" else ""
         html.append(f'<tr{cls}><td>{label}</td><td class="num">{pct(a, 3)}</td>'
-                    f'<td class="num">{pct(b, 3)}</td><td class="num">{(b - a) * 100:+.3f} pp</td></tr>')
+                    f'<td class="num">{pct(b, 3)}</td><td class="num">{round((b - a) * 100, 6) + 0.0:+.3f} pp</td></tr>')
     html.append("</table>")
     st.markdown("".join(html), unsafe_allow_html=True)
 
@@ -550,7 +552,13 @@ with tab_src:
 
     with st.expander("All 10-year yields (Trading Economics)"):
         bt = get_bond_table()
-        st.caption(f"Status: {bt['status']} · as of {bt['as_of']} · fetched {bt['fetched_at']}")
+        if bt["status"] == "live":
+            st.caption(f"Live · as of {bt['as_of']} · fetched {bt['fetched_at']}")
+        else:
+            st.caption("Trading Economics only serves its full bonds table to browsers, so this list "
+                       "is the snapshot saved on 16 Nov 2026. The two yields used in the calculation "
+                       "(see the table above) are downloaded live from each country's own "
+                       "Trading Economics page.")
         st.dataframe(bt["data"], hide_index=True, width="stretch")
     with st.expander("All corporate tax rates (OECD)"):
         st.dataframe(tax_src["data"], hide_index=True, width="stretch")
